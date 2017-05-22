@@ -1,2 +1,2 @@
 # Python-Projects
-Learning Python myself
+Programming
