@@ -15,8 +15,9 @@ main() {
 		for(i=0;i<5;i++) {
 			for(j=0;j<30;j++){
 				fprintf(fp,"%c",inf[i][j]);
-				if(inf[i][j]==`\0`) break;
+				//if(inf[i][j]==`\0`) break;
 			}
+			fprintf(fp,"\n");
 		}
 	}
 	fclose(fp);
