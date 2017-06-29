@@ -26,6 +26,8 @@ typedef struct _edge {        //±ßµÄÊı¾İ
 	int weight;  
 }Edge;
 
+Graph G;
+
 Graph* create_graph() {
 	char vexs[]={'A','B','C','D'};
 	int matrix[][9]={
