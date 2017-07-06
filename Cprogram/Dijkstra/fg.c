@@ -1,5 +1,5 @@
 //cygwin
-//gcc -I/usr/include/opengl -o main.exe main.c -lglut32 -lglu32 -lopengl32 -lpthread
+//gcc -I/usr/include/opengl -o fg.exe fg.c -lglut32 -lglu32 -lopengl32 -lpthread
 /*
 *****************UPDTE LOG*********************** 
 
@@ -45,25 +45,25 @@ int draw_counter; // 軌跡描画用カウンタ
 int draw_route_num; // 軌跡描画用番号
 int drawing_route_flag; // 軌跡描画中フラグ
 
-int matrix[TOTAL][TOTAL];               //DISTANCE READLIST 
-int visited[TOTAL];                     //FLAG
-int distanceE[TOTAL];						//record the distance from endpoint to every point
-int queue[TOTAL];             //MAP READLIST
-int prev[TOTAL];                                 //前一个点的dizhi(queue)
+int matrix[TOTAL][TOTAL];               //Read the distance between two points (Adjacency matrix)
+int visited[TOTAL];                     //Judge if the crosses has been visited
+int distanceE[TOTAL];			//Record the shortest distance from endpoint to every point
+int queue[TOTAL];            		//A queue for recording the search list
+int prev[TOTAL];                        //Record the previous crosses in the waypoint
 int start,end;                          //start point, end point
 
-typedef struct {                            //map
-	char number[3];
-	double pos[2];
-	char name[30];
-	int numofnearby;
-	int nearby[7];
+typedef struct {                  	
+	char number[3];			//Cross number
+	double pos[2];			//Cross position
+	char name[30];			//Cross name
+	int numofnearby;		//Number of nearby points
+	int nearby[7];			//Every point address nearby
 } Map_YZ;
 
-Map_YZ YZ[TOTAL];                           //MAP
+Map_YZ YZ[TOTAL];                       //MAP
 
-void read_data(char *filename) {            //read the map data(completed)
-	FILE *fp=fopen(filename,"r");
+void read_data(char *filename) {        //read the map data
+	FILE *fp=fopen(filename,"r");	//Read the file
 	int i,j;
 	if(fp==NULL) {
 		printf("FAILED.\n");
@@ -102,20 +102,20 @@ void glut_display(void)
 	double yy;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// 背景を白に描画
-	glMatrixMode(GL_MODELVIEW);		// モデルビュー変換行列を設定
-	glLoadIdentity();	// 行列を単位行列で初期化
-	glOrtho(0, 1400, -1150, 250, -1.0, 1.0);	// 描画範囲を設定
+	glMatrixMode(GL_MODELVIEW);					// モデルビュー変換行列を設定
+	glLoadIdentity();						// 行列を単位行列で初期化
+	glOrtho(0, 1400, -1150, 250, -1.0, 1.0);			// 描画範囲を設定
 
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);	// テクスチャの設定
 
 	// 道路の描画
-	glColor3d(0.1, 0.5, 0.8);	// 青
+	glColor3d(0.1, 0.5, 0.8);					// 青
 	glLineWidth(3);
 	glBegin(GL_LINES);
 	for (i = 0; i<TOTAL; i++){
 		for (j = 0; j<YZ[i].numofnearby; j++){
 			next = YZ[i].nearby[j]-1;
-			if (next < i) 	continue;	// 既に描画した道路はスキップ
+			if (next < i) 	continue;			// 既に描画した道路はスキップ
 			glVertex2d(YZ[i].pos[0], YZ[i].pos[1]);
 			glVertex2d(YZ[next].pos[0], YZ[next].pos[1]);
 		}
@@ -123,7 +123,7 @@ void glut_display(void)
 	glEnd();
 	
 	// 交差点の描画
-	glColor3d(1.0, 0.0, 0.3);  // 赤
+	glColor3d(1.0, 0.0, 0.3);  					// 赤
 	glBegin(GL_QUADS);
 	for (i = 0; i<TOTAL; i++){
 		glVertex2d(YZ[i].pos[0], YZ[i].pos[1] - cross_size);
@@ -146,7 +146,7 @@ void glut_display(void)
 		}
 	}
 	// 出発点から目的地までのルートを描画
-	glColor3d(0.0, 1.0, 0.0);  // 緑
+	glColor3d(0.0, 1.0, 0.0); 					 // 緑
 	glLineWidth(3);
 	glBegin(GL_LINES);
 	for (i=0;i<draw_route_num;i++){
@@ -208,26 +208,28 @@ void glut_display(void)
 //*****************************************
 void glut_timer(int value)
 {
-	glutPostRedisplay();	// 再描画
+	glutPostRedisplay();			// 再描画
 	draw_counter++;
 	glutTimerFunc(40, glut_timer, 0);	// 自身の呼出し 40 msec後
 }
 
+//Calculate the distance between two points by inputing the address
 //*****************************************
 // dist_cal(int start, int end)
 //*****************************************
-int dist_cal(int start, int end) {          //calculate the distance and turn into int(completed)
+int dist_cal(int start, int end) {          	//calculate the distance and turn into integer(completed)
 	double x1,x2,y1,y2;
 	double distance;
-	x1=YZ[start-1].pos[0];                 //注意，?个函数?入是加一的点！ 
+	x1=YZ[start-1].pos[0]; 	
 	y1=YZ[start-1].pos[1];
 	x2=YZ[end-1].pos[0];
 	y2=YZ[end-1].pos[1];
 	//double x1,double y1,double x2,double y2
 	distance=sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
-	return (int)distance;
+	return (int)distance;			//For easier comparation, the result has been truned into int
 }
 
+//
 //*****************************************
 // check_first (Map_YZ YZ[], int v)
 //*****************************************
