@@ -1,5 +1,30 @@
 //cygwin
 //gcc -I/usr/include/opengl -o main.exe main.c -lglut32 -lglu32 -lopengl32 -lpthread
+/*
+*****************UPDTE LOG*********************** 
+
+///ALPHA (Dijkstra Arithmetics)///
+ver.0.3.Just try to change the cross address in the map(for searching). (completed)
+ver.0.35. (completed)
+	Code the part of BFS(Breadth First Search).
+ver.0.4.Use BFS to visit every cross in the map(from the goalpoint). (completed)
+ver.0.5.Update the distance from goal point to all the other crosses(distanceE[TOTAL]). (completed)
+ver.0.55.Find the shortest distance to any point inputed by users. (completed)
+ver.0.56.Code the part of tree waypoints(prev[TOTAL]). (completed)
+ver.0.7.Show every waypoints from start point to goal point inputed by user. (completed)
+
+///BETA (OpenGL Graphics)///
+ver.0.71. show the windowï¼ˆcompletedï¼‰
+ver.0.73. show the linesï¼ˆcompletedï¼‰
+ver.0.8. show the complete map with glutï¼ˆcompletedï¼‰
+ver.0.9.Run and draw the route in the graphics (completed)
+
+///Debug///
+ver.0.91.debug the problem that the former route cant be refreshed in the next time
+
+
+ver.1.0ç›®?ï¼šdebugï¼ŒæˆåŠŸ?è¡Œç¨‹åº
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -9,51 +34,22 @@
 #include <windows.h>
 #include <GL/glut.h>
 
-#define TOTAL 35
-#define INF 32767
-#define DISTANCE(x1,y1,x2,y2)	((double)( sqrt(pow(x1 - x2, 2) + pow(y1 -  y2, 2)) ))
+#define TOTAL 35    //Define the total number of the crosses
+#define INF 32767   //Define a infinite number
+#define DISTANCE(x1,y1,x2,y2)	((double)( sqrt(pow(x1 - x2, 2) + pow(y1 -  y2, 2)) ))  //Calculate the distance between two points
 
-/*
-*****************UPDTE LOG*********************** 
-ver.0.3.æ•sŠÇ‹—?C??³íØ?ˆÊ’uiãj 
-ver.0.35. (ã)
-	›ß?‰ÂˆÈ³íØ?ˆÊ’uC?İ”C?¥Š®¬›ö“x?ærõ 
-	”\?rõŠ®‘S•”?
-	—L˜¢—‰ğã“I??C•s¥i“_“?Ú“_“IÅ’Z‹—?C§¥‹N“_“?Ú“_“IÅ’Z‹—?
-	‹é?³¥??Hì“Iimatrix[i][j]•\¦i“_“j“_“I‹—?j 
-	§gvisitedhA¥•\¦¥”Û?“¾—¹?˜¢“_?‹ß“IÅ’Z‹—?Hj 
-ver.0.4.”\?³írõ“–Ú?“_ iãj 
-ver.0.45.˜ôo˜¸‹N“_“Še˜¢“_“I‹—?iãj 
-	–çA¥?Ÿ??queue“I?ŒóA‰ÂˆÈXVŠ—L“Idistance 
-ver.0.5.–Ú?F”\?Š®®?¦˜¸‹N“_“Š—L“_“I‹—?iãj 
-ver.0.55.–Ú?F”\??Q?“_“IÅ’Z‹—?(ã)
-	?’…—p?—ñ—ˆ?? 
-ver.0.56.˜ôo‰ÂˆÈ‹o”CˆÓ?“_Å’Z‹—?“I”Ÿ”i‘´?ˆê˜¢“_¥ŒÅ’è“Ij  iãj 
-	–Ú‘O‘z–@F?Z?“_“”CˆÓˆê“_“I‹—?C‘R@˜¸‹N“_?n???˜¢“_C?QÅ’Z‹—?
-	prev“IŠÜ?¥ 
-ver.0.7.–Ú?F”\??¦Å’Z˜H???“I˜H“_   iãj 
-ver.0.71. show the windowiãj
-ver.0.73. show the linesiãj
-ver.0.8. show the complete map with glutiãj
-ver.0.9–Ú?F”\?—^OpenGL?‡Cİgraphã?soŠ®®˜HŒaiãj
-ver.0.91.debug the problem that the former route cant be refreshed in the next time
-
-
-ver.1.0–Ú?FdebugC¬Œ÷?s’ö˜
-*/
-
-double draw_speed = 6.0f; // ƒ}[ƒJ[‚ÌˆÚ“®‘¬“x
-float cross_size = 8.0f; // ƒ}[ƒJ[‚Ì‘å‚«‚³
-int draw_route[TOTAL]; // –Ú“I’n‚Ü‚Å‚Ì“¹‡
-int draw_counter; // ‹OÕ•`‰æ—pƒJƒEƒ“ƒ^
-int draw_route_num; // ‹OÕ•`‰æ—p”Ô†
-int drawing_route_flag; // ‹OÕ•`‰æ’†ƒtƒ‰ƒO
+double draw_speed = 6.0f; // ãƒãƒ¼ã‚«ãƒ¼ã®ç§»å‹•é€Ÿåº¦
+float cross_size = 8.0f; // ãƒãƒ¼ã‚«ãƒ¼ã®å¤§ãã•
+int draw_route[TOTAL]; // ç›®çš„åœ°ã¾ã§ã®é“é †
+int draw_counter; // è»Œè·¡æç”»ç”¨ã‚«ã‚¦ãƒ³ã‚¿
+int draw_route_num; // è»Œè·¡æç”»ç”¨ç•ªå·
+int drawing_route_flag; // è»Œè·¡æç”»ä¸­ãƒ•ãƒ©ã‚°
 
 int matrix[TOTAL][TOTAL];               //DISTANCE READLIST 
 int visited[TOTAL];                     //FLAG
 int distanceE[TOTAL];						//record the distance from endpoint to every point
 int queue[TOTAL];             //MAP READLIST
-int prev[TOTAL];                                 //‘Oˆê˜¢“_“Idizhi(queue)
+int prev[TOTAL];                                 //å‰ä¸€ä¸ªç‚¹çš„dizhi(queue)
 int start,end;                          //start point, end point
 
 typedef struct {                            //map
@@ -83,7 +79,7 @@ void read_data(char *filename) {            //read the map data(completed)
 	fclose(fp);
 }
 
-// ‹OÕ•`‰æƒJƒEƒ“ƒ^‰Šú‰»
+// è»Œè·¡æç”»ã‚«ã‚¦ãƒ³ã‚¿åˆæœŸåŒ–
 //*****************************************
 // route_draw_init()
 //*****************************************
@@ -93,7 +89,7 @@ void route_draw_init()
 	draw_route_num = 0;
 }
 
-// ‰æ–Ê•`‰æ
+// ç”»é¢æç”»
 //*****************************************
 // glut_display(void)
 //*****************************************
@@ -105,29 +101,29 @@ void glut_display(void)
 	double xx;
 	double yy;
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// ”wŒi‚ğ”’‚É•`‰æ
-	glMatrixMode(GL_MODELVIEW);		// ƒ‚ƒfƒ‹ƒrƒ…[•ÏŠ·s—ñ‚ğİ’è
-	glLoadIdentity();	// s—ñ‚ğ’PˆÊs—ñ‚Å‰Šú‰»
-	glOrtho(0, 1400, -1150, 250, -1.0, 1.0);	// •`‰æ”ÍˆÍ‚ğİ’è
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// èƒŒæ™¯ã‚’ç™½ã«æç”»
+	glMatrixMode(GL_MODELVIEW);		// ãƒ¢ãƒ‡ãƒ«ãƒ“ãƒ¥ãƒ¼å¤‰æ›è¡Œåˆ—ã‚’è¨­å®š
+	glLoadIdentity();	// è¡Œåˆ—ã‚’å˜ä½è¡Œåˆ—ã§åˆæœŸåŒ–
+	glOrtho(0, 1400, -1150, 250, -1.0, 1.0);	// æç”»ç¯„å›²ã‚’è¨­å®š
 
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);	// ƒeƒNƒXƒ`ƒƒ‚Ìİ’è
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è¨­å®š
 
-	// “¹˜H‚Ì•`‰æ
-	glColor3d(0.1, 0.5, 0.8);	// Â
+	// é“è·¯ã®æç”»
+	glColor3d(0.1, 0.5, 0.8);	// é’
 	glLineWidth(3);
 	glBegin(GL_LINES);
 	for (i = 0; i<TOTAL; i++){
 		for (j = 0; j<YZ[i].numofnearby; j++){
 			next = YZ[i].nearby[j]-1;
-			if (next < i) 	continue;	// Šù‚É•`‰æ‚µ‚½“¹˜H‚ÍƒXƒLƒbƒv
+			if (next < i) 	continue;	// æ—¢ã«æç”»ã—ãŸé“è·¯ã¯ã‚¹ã‚­ãƒƒãƒ—
 			glVertex2d(YZ[i].pos[0], YZ[i].pos[1]);
 			glVertex2d(YZ[next].pos[0], YZ[next].pos[1]);
 		}
 	}
 	glEnd();
 	
-	// Œğ·“_‚Ì•`‰æ
-	glColor3d(1.0, 0.0, 0.3);  // Ô
+	// äº¤å·®ç‚¹ã®æç”»
+	glColor3d(1.0, 0.0, 0.3);  // èµ¤
 	glBegin(GL_QUADS);
 	for (i = 0; i<TOTAL; i++){
 		glVertex2d(YZ[i].pos[0], YZ[i].pos[1] - cross_size);
@@ -137,7 +133,7 @@ void glut_display(void)
 	}
 	glEnd();
 	
-	// Œğ·“_–¼‚Ì•\¦
+	// äº¤å·®ç‚¹åã®è¡¨ç¤º
 	glColor3d(1.0, 1.0, 1.0);  // white
 	for(i=0;i<100;i++) {
 		glRasterPos2f(50+10*i,50);
@@ -149,8 +145,8 @@ void glut_display(void)
 			glutBitmapCharacter(GLUT_BITMAP_9_BY_15, YZ[i].name[j]);
 		}
 	}
-	// o”­“_‚©‚ç–Ú“I’n‚Ü‚Å‚Ìƒ‹[ƒg‚ğ•`‰æ
-	glColor3d(0.0, 1.0, 0.0);  // —Î
+	// å‡ºç™ºç‚¹ã‹ã‚‰ç›®çš„åœ°ã¾ã§ã®ãƒ«ãƒ¼ãƒˆã‚’æç”»
+	glColor3d(0.0, 1.0, 0.0);  // ç·‘
 	glLineWidth(3);
 	glBegin(GL_LINES);
 	for (i=0;i<draw_route_num;i++){
@@ -162,9 +158,9 @@ void glut_display(void)
 	}
 	glEnd();
 	
-	// ’n}•`‰æ ƒ}[ƒJ[‚Æ‚»‚Ì‹OÕ
+	// åœ°å›³æç”» ãƒãƒ¼ã‚«ãƒ¼ã¨ãã®è»Œè·¡
 	if (draw_route[draw_route_num] != 0 && draw_route[draw_route_num + 1] != 0){
-		// ’Ê‰ßÏ‚İŒğ·“_‚ÆŸ‚ÌŒğ·“_A‚Q“_‚ÌÀ•W‚©‚çƒ}[ƒJ[‚ğ•\¦‚·‚éÀ•W‚ğŒvZ
+		// é€šéæ¸ˆã¿äº¤å·®ç‚¹ã¨æ¬¡ã®äº¤å·®ç‚¹ã€ï¼’ç‚¹ã®åº§æ¨™ã‹ã‚‰ãƒãƒ¼ã‚«ãƒ¼ã‚’è¡¨ç¤ºã™ã‚‹åº§æ¨™ã‚’è¨ˆç®—
 		n = draw_route[draw_route_num]-1;
 		next = draw_route[draw_route_num+1]-1;
 
@@ -172,26 +168,26 @@ void glut_display(void)
 		xx = (double)YZ[n].pos[0] + ((YZ[next].pos[0] - YZ[n].pos[0]) / d) * draw_speed * draw_counter;
 		yy = (double)YZ[n].pos[1] + ((YZ[next].pos[1] - YZ[next].pos[1]) / d) * draw_speed * draw_counter;
 
-		// ƒ}[ƒJ[À•W‚ÍAŸ‚ÌŒğ·“_‚ğ’Ê‚è‰z‚µ‚Ä•`‰æ‚µ‚Ä‚¢‚È‚¢‚©ƒ`ƒFƒbƒN
+		// ãƒãƒ¼ã‚«ãƒ¼åº§æ¨™ã¯ã€æ¬¡ã®äº¤å·®ç‚¹ã‚’é€šã‚Šè¶Šã—ã¦æç”»ã—ã¦ã„ãªã„ã‹ãƒã‚§ãƒƒã‚¯
 		if (d <  DISTANCE(YZ[n].pos[0], YZ[n].pos[1], xx, yy)){
-			// ’Ê‚è‰z‚µ‚Ä‚¢‚éê‡‚ÍAŒğ·“_‚Ü‚Å•`‰æ
+			// é€šã‚Šè¶Šã—ã¦ã„ã‚‹å ´åˆã¯ã€äº¤å·®ç‚¹ã¾ã§æç”»
 			xx = YZ[next].pos[0];
 			yy = YZ[next].pos[1];
 			draw_counter = 0;
 			draw_route_num++;
 		}
 
-		// ƒ}[ƒJ[‚Ì‹OÕ‚ğ•`‰æ
-		glColor3d(0.0, 1.0, 0.0);  // —Î
+		// ãƒãƒ¼ã‚«ãƒ¼ã®è»Œè·¡ã‚’æç”»
+		glColor3d(0.0, 1.0, 0.0);  // ç·‘
 		glLineWidth(3);
 		glBegin(GL_LINES);
 		glVertex2d(YZ[n].pos[0], YZ[n].pos[1]);
 		glVertex2d(xx, yy);
 		glEnd();
 
-		// ƒ}[ƒJ[‚ğ•`‰æ
-		glColor3d(0.0, 1.0, 0.0);  // —Î
-		glBegin(GL_QUADS);					// ƒ}[ƒJ[‚ÌƒJƒ^ƒ`‚Í‚½‚¾‚Ì¡
+		// ãƒãƒ¼ã‚«ãƒ¼ã‚’æç”»
+		glColor3d(0.0, 1.0, 0.0);  // ç·‘
+		glBegin(GL_QUADS);					// ãƒãƒ¼ã‚«ãƒ¼ã®ã‚«ã‚¿ãƒã¯ãŸã ã®â– 
 		glVertex2d(xx- markerSize, yy+ markerSize);
 		glVertex2d(xx+ markerSize, yy+ markerSize);
 		glVertex2d(xx+ markerSize, yy- markerSize);
@@ -199,22 +195,22 @@ void glut_display(void)
 		glEnd();
 	}
 	else{
-		// ‘S‚Ä‚Ì“¹’ö‚Ì•`‰æI‚í‚Á‚½‚Ì‚Å–Ú“I’n‚Ü‚Å‚Ìƒ}[ƒJ[‚Ì•`‰æ‚ÍI—¹B
-		// –Ú“I’n“ü—Í‚ğ—LŒø‚É‚·‚é
+		// å…¨ã¦ã®é“ç¨‹ã®æç”»çµ‚ã‚ã£ãŸã®ã§ç›®çš„åœ°ã¾ã§ã®ãƒãƒ¼ã‚«ãƒ¼ã®æç”»ã¯çµ‚äº†ã€‚
+		// ç›®çš„åœ°å…¥åŠ›ã‚’æœ‰åŠ¹ã«ã™ã‚‹
 		drawing_route_flag = 0;
 	}
 	glutSwapBuffers();
 }
 
-// ‰æ–Ê•`‰æXVƒ^ƒCƒ}
+// ç”»é¢æç”»æ›´æ–°ã‚¿ã‚¤ãƒ
 //*****************************************
 // glut_timer(int value)
 //*****************************************
 void glut_timer(int value)
 {
-	glutPostRedisplay();	// Ä•`‰æ
+	glutPostRedisplay();	// å†æç”»
 	draw_counter++;
-	glutTimerFunc(40, glut_timer, 0);	// ©g‚ÌŒÄo‚µ 40 msecŒã
+	glutTimerFunc(40, glut_timer, 0);	// è‡ªèº«ã®å‘¼å‡ºã— 40 msecå¾Œ
 }
 
 //*****************************************
@@ -223,7 +219,7 @@ void glut_timer(int value)
 int dist_cal(int start, int end) {          //calculate the distance and turn into int(completed)
 	double x1,x2,y1,y2;
 	double distance;
-	x1=YZ[start-1].pos[0];                 //’ˆÓC?˜¢”Ÿ”?“ü¥‰Áˆê“I“_I 
+	x1=YZ[start-1].pos[0];                 //æ³¨æ„ï¼Œ?ä¸ªå‡½æ•°?å…¥æ˜¯åŠ ä¸€çš„ç‚¹ï¼ 
 	y1=YZ[start-1].pos[1];
 	x2=YZ[end-1].pos[0];
 	y2=YZ[end-1].pos[1];
@@ -235,7 +231,7 @@ int dist_cal(int start, int end) {          //calculate the distance and turn in
 //*****************************************
 // check_first (Map_YZ YZ[], int v)
 //*****************************************
-int check_first (Map_YZ YZ[], int v) {        //‘S“s?ˆê(completed)
+int check_first (Map_YZ YZ[], int v) {        //å…¨éƒ½?ä¸€(completed)
 	if(v<0) {
 		return (-1);
 	}else {
@@ -246,7 +242,7 @@ int check_first (Map_YZ YZ[], int v) {        //‘S“s?ˆê(completed)
 //*****************************************
 // check_next (Map_YZ YZ[], int v, int w)
 //*****************************************
-int check_next (Map_YZ YZ[], int v, int w) {  //?ˆê  w¥‘Oˆê˜¢“_C•Ô‰ñ?¥‰ºˆê˜¢?‹ß“_“I’nš¬ (completed)
+int check_next (Map_YZ YZ[], int v, int w) {  //?ä¸€  wæ˜¯å‰ä¸€ä¸ªç‚¹ï¼Œè¿”å›?æ˜¯ä¸‹ä¸€ä¸ª?è¿‘ç‚¹çš„åœ°å€ (completed)
 	int i;
 	for(i=0;i<YZ[v].numofnearby;i++) {
 		if((YZ[v].nearby[i]-1)==w) {
@@ -268,7 +264,7 @@ int check_next (Map_YZ YZ[], int v, int w) {  //?ˆê  w¥‘Oˆê˜¢“_C•Ô‰ñ?¥‰ºˆê˜¢?
 //*****************************************
 // BFS(Map_YZ YZ[],int end)
 //*****************************************
-int BFS(Map_YZ YZ[],int end) {            //‘¶?—¹queue(Z)C???“_C•Ô‰ñqueue”-1
+int BFS(Map_YZ YZ[],int end) {            //å­˜?äº†queue(Z)ï¼Œ???ç‚¹ï¼Œè¿”å›queueæ•°-1
 	int head=0;
 	int rear=1;
 	int i,j,k;
@@ -325,10 +321,10 @@ void RECDIST(Map_YZ YZ[]) {
 	distanceE[end]=0;
 	prev[end]=-1;
 	
-	queuecount=BFS(YZ,end);                         //‘¶?—¹queueC???“_ 
+	queuecount=BFS(YZ,end);                         //å­˜?äº†queueï¼Œ???ç‚¹ 
 	
 	//running
-	for(i=0;i<queuecount;i++) {           //?Z—¹˜¸?“_“Š—L“_“IÅ’Z‹—? 
+	for(i=0;i<queuecount;i++) {           //?ç®—äº†ä»?ç‚¹åˆ°æ‰€æœ‰ç‚¹çš„æœ€çŸ­è·? 
 		for(j=0;j<YZ[queue[i]].numofnearby;j++) {
 			tempdist=distanceE[queue[i]]+matrix[queue[i]][YZ[queue[i]].nearby[j]-1];
 			if(tempdist<=distanceE[YZ[queue[i]].nearby[j]-1]) {
@@ -341,7 +337,7 @@ void RECDIST(Map_YZ YZ[]) {
 	}
 }
 
-// ƒRƒ“ƒ\[ƒ‹“ü—Í—p‚ÌŠÖ”AƒXƒŒƒbƒh‚©‚çŒÄ‚Ño‚µ
+// ã‚³ãƒ³ã‚½ãƒ¼ãƒ«å…¥åŠ›ç”¨ã®é–¢æ•°ã€ã‚¹ãƒ¬ãƒƒãƒ‰ã‹ã‚‰å‘¼ã³å‡ºã—
 //*****************************************
 // input_thread(LPVOID args)
 //*****************************************
@@ -368,7 +364,7 @@ DWORD WINAPI input_thread(LPVOID args) {
 			i=prev[i];
 		}
 		printf("\n");
-		// •`‰æŠJn
+		// æç”»é–‹å§‹
 		route_draw_init();
 		drawing_route_flag = 1;
 	}
@@ -390,18 +386,18 @@ int main(int argc, char *argv[]) {
 		
 	HANDLE console_thread;
 		
-	// ƒRƒ“ƒ\[ƒ‹“ü—Í—p‚ÌƒXƒŒƒbƒh‚ğì¬Dinput_thread()ŠÖ”‚ğŒÄ‚Ño‚µ
+	// ã‚³ãƒ³ã‚½ãƒ¼ãƒ«å…¥åŠ›ç”¨ã®ã‚¹ãƒ¬ãƒƒãƒ‰ã‚’ä½œæˆï¼input_thread()é–¢æ•°ã‚’å‘¼ã³å‡ºã—
 	CreateThread(NULL, 0, input_thread, NULL, 0, NULL);
 		
-	// glut ‰Šú‰»E•`‰æŠJn
-	glutInitWindowSize(1200, 800);	// ƒEƒBƒ“ƒhƒEƒTƒCƒY‚Ìİ’è
-	glutInit(&argc, argv);	// ‰Šú‰»
-	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);	// ƒfƒBƒXƒvƒŒƒCƒ‚[ƒh‚ğİ’è
-	glutCreateWindow("Car Navigation");		// •`‰æƒEƒBƒ“ƒhƒE¶¬
+	// glut åˆæœŸåŒ–ãƒ»æç”»é–‹å§‹
+	glutInitWindowSize(1200, 800);	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚µã‚¤ã‚ºã®è¨­å®š
+	glutInit(&argc, argv);	// åˆæœŸåŒ–
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);	// ãƒ‡ã‚£ã‚¹ãƒ—ãƒ¬ã‚¤ãƒ¢ãƒ¼ãƒ‰ã‚’è¨­å®š
+	glutCreateWindow("Car Navigation");		// æç”»ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ç”Ÿæˆ
 	
-	glClearColor(0.0, 0.2, 0.13, 1.0);	//‰æ–Ê”wŒiİ’èi”’j
-	glutDisplayFunc(glut_display);	// ‰æ–Ê•`‰æŠÖ”“o˜^
-	glutTimerFunc(100, glut_timer, 0);	// ƒ^ƒCƒ}[ŠÖ”“o˜^ 100msecŒã‚ÉŒÄo‚µ
+	glClearColor(0.0, 0.2, 0.13, 1.0);	//ç”»é¢èƒŒæ™¯è¨­å®šï¼ˆç™½ï¼‰
+	glutDisplayFunc(glut_display);	// ç”»é¢æç”»é–¢æ•°ç™»éŒ²
+	glutTimerFunc(100, glut_timer, 0);	// ã‚¿ã‚¤ãƒãƒ¼é–¢æ•°ç™»éŒ² 100msecå¾Œã«å‘¼å‡ºã—
 	glutMainLoop();
 	
 	return 0;
