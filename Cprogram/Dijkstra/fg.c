@@ -49,7 +49,7 @@ int matrix[TOTAL][TOTAL];               //Read the distance between two points (
 int visited[TOTAL];                     //Judge if the crosses has been visited
 int distanceE[TOTAL];			//Record the shortest distance from endpoint to every point
 int queue[TOTAL];            		//A queue for recording the search list
-int prev[TOTAL];                        //Record the previous crosses in the waypoint
+int prev[TOTAL];                        //Record the previous crosses in the waypoint(Foreground vertex)
 int start,end;                          //start point, end point
 
 typedef struct {                  	
@@ -290,46 +290,48 @@ int BFS(Map_YZ YZ[],int end) {            		//The function of queue[i] is record
 	return head;					//Return the times of searching(in case of overflow)
 }
 
-//
+//Record distance. Record every distance and waypoint from goal point to every point.
 //*****************************************
 // RECDIST(Map_YZ YZ[])
 //*****************************************
 void RECDIST(Map_YZ YZ[]) {
 	int i,j;
 	int mindist,tempdist,queuecount;
+	
 	//initialize the matrix 
 	for(i=0;i<TOTAL;i++) {
-		prev[i]=0;
-		for(j=0;j<TOTAL;j++) {
+		prev[i]=0;				//Foreground vertex
+		for(j=0;j<TOTAL;j++) {			//Initialize the adjacency matrix
 			if(i==j) {
-				matrix[i][j]=0;
+				matrix[i][j]=0;		//The same point has no distance
 			} else {
-				matrix[i][j]=INF;
+				matrix[i][j]=INF;	//The point that are not adjacent has set distance as infinite
 			}
 		}
 		for(j=0;j<YZ[i].numofnearby;j++) {
-			matrix[i][YZ[i].nearby[j]-1]=dist_cal(i+1,YZ[i].nearby[j]);
+			matrix[i][YZ[i].nearby[j]-1]=dist_cal(i+1,YZ[i].nearby[j]);//Adjacent point
 		}
 	}
+	
 	//input the start point
 	printf("which point do you want to start? please input the number:(If you want to quit,input 99)\n");
 	scanf("%d",&start);
 	printf("and which point do you want to end? please input the number:\n");
 	scanf("%d",&end);
-	start-=1;                                //start has been -1
-	end-=1;
+	start-=1;                              		//start has been -1
+	end-=1;						//end has been -1
 	//initialize the distance
 	for(i=0;i<TOTAL;i++) {
-		distanceE[i]=matrix[end][i];
+		distanceE[i]=matrix[end][i];		//record the adjacent points of start point first
 	}
 	//initialize the start&end point
 	distanceE[end]=0;
-	prev[end]=-1;
+	prev[end]=-1;					//Parent
 	
-	queuecount=BFS(YZ,end);                         //存?了queue，???点 
+	queuecount=BFS(YZ,end);                         //Run BFS function
 	
 	//running
-	for(i=0;i<queuecount;i++) {           //?算了从?点到所有点的最短距? 
+	for(i=0;i<queuecount;i++) {           		//Calculate the distance[TOTAL] by visiting the queue[TOTAL] in order.
 		for(j=0;j<YZ[queue[i]].numofnearby;j++) {
 			tempdist=distanceE[queue[i]]+matrix[queue[i]][YZ[queue[i]].nearby[j]-1];
 			if(tempdist<=distanceE[YZ[queue[i]].nearby[j]-1]) {
@@ -337,7 +339,7 @@ void RECDIST(Map_YZ YZ[]) {
 				prev[YZ[queue[i]].nearby[j]-1]=queue[i];
 			}
 			//distanceE[YZ[queue[i]].nearby[j]-1]=min(distanceE[YZ[queue[i]].nearby[j]-1],tempdist);
-			//claculate the shortest distance and make sure the waypoint
+			//claculate the shortest distance and the waypoint
 		}
 	}
 }
@@ -350,13 +352,15 @@ DWORD WINAPI input_thread(LPVOID args) {
 	int i,j;
 	while(1){
 		
-		RECDIST(YZ);
+		RECDIST(YZ);				//Record distance
 		
 		if ((!(start == 98) && !(start >= 0 && start <= TOTAL))){
 			printf("I cannot find the point.\n\n");
-			continue;
+			continue;			//In case of wrong input
 		}
 		else if(start == 98) exit(0);
+		
+		//Record the waypoint for drawing
 		i=start;
 		printf("ROUTE:\n");
 		printf("%d",start+1);
