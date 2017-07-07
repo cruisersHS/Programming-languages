@@ -66,7 +66,7 @@ void read_data(char *filename) {        //read the map data
 	FILE *fp=fopen(filename,"r");	//Read the file
 	int i,j;
 	if(fp==NULL) {
-		printf("FAILED.\n");
+		printf("FAILED.\n");	//If the reading has failed, print"FAILED."
 	} else {
 		for(i=0;i<TOTAL;i++) {
 			fscanf(fp,"%[^,], %lf, %lf, %[^,], %d",YZ[i].number,&YZ[i].pos[0],&YZ[i].pos[1],YZ[i].name,&YZ[i].numofnearby);
@@ -116,7 +116,7 @@ void glut_display(void)
 		for (j = 0; j<YZ[i].numofnearby; j++){
 			next = YZ[i].nearby[j]-1;
 			if (next < i) 	continue;			// 既に描画した道路はスキップ
-			glVertex2d(YZ[i].pos[0], YZ[i].pos[1]);
+			glVertex2d(YZ[i].pos[0], YZ[i].pos[1]);	
 			glVertex2d(YZ[next].pos[0], YZ[next].pos[1]);
 		}
 	}
@@ -213,11 +213,11 @@ void glut_timer(int value)
 	glutTimerFunc(40, glut_timer, 0);	// 自身の呼出し 40 msec後
 }
 
-//Calculate the distance between two points by inputing the address
+//Calculate the distance between two points by inputing the address,to weight the shortest distance
 //*****************************************
 // dist_cal(int start, int end)
 //*****************************************
-int dist_cal(int start, int end) {          	//calculate the distance and turn into integer(completed)
+int dist_cal(int start, int end) {          			//calculate the distance and turn into integer(completed)
 	double x1,x2,y1,y2;
 	double distance;
 	x1=YZ[start-1].pos[0]; 	
@@ -225,30 +225,31 @@ int dist_cal(int start, int end) {          	//calculate the distance and turn i
 	x2=YZ[end-1].pos[0];
 	y2=YZ[end-1].pos[1];
 	//double x1,double y1,double x2,double y2
-	distance=sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
-	return (int)distance;			//For easier comparation, the result has been truned into int
+	distance=sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));		//distance=(δx^2+δy^2)^(1/2)
+	return (int)distance;					//For easier comparation, the result has been truned into int
 }
 
-//
+//Used in BFS, to check the first search point in a root point.(Input the root address, return the first nearby address.)
 //*****************************************
 // check_first (Map_YZ YZ[], int v)
 //*****************************************
-int check_first (Map_YZ YZ[], int v) {        //全都?一(completed)
+int check_first (Map_YZ YZ[], int v) {        	//Address minus 1(completed)
 	if(v<0) {
 		return (-1);
 	}else {
-		return (YZ[v].nearby[0]-1);
+		return (YZ[v].nearby[0]-1);	//The first point among the nearby addresses.
 	}
 }
 
+//Used in BFS, to check the next search point in a root point. (Input the root address and the former address, return the next nearby address)
 //*****************************************
 // check_next (Map_YZ YZ[], int v, int w)
 //*****************************************
-int check_next (Map_YZ YZ[], int v, int w) {  //?一  w是前一个点，返回?是下一个?近点的地址 (completed)
+int check_next (Map_YZ YZ[], int v, int w) {  		//Address minus 1 (completed)
 	int i;
 	for(i=0;i<YZ[v].numofnearby;i++) {
 		if((YZ[v].nearby[i]-1)==w) {
-			break;
+			break;				//count i, which is the "i"th nearby address of v
 		} else {
 		}
 	}
@@ -256,27 +257,28 @@ int check_next (Map_YZ YZ[], int v, int w) {  //?一  w是前一个点，返回?
 		return -1;
 	} else {
 		if((i+1)<YZ[v].numofnearby) {
-			return (YZ[v].nearby[i+1]-1);
+			return (YZ[v].nearby[i+1]-1);	
 		} else {
-			return -1;
+			return -1;			//If i reached the last nearby point of v, end searching
 		}
 	}
 }
 
+//Breadth First Search function, start from the goal point, search all the point and build a data tree.
 //*****************************************
 // BFS(Map_YZ YZ[],int end)
 //*****************************************
-int BFS(Map_YZ YZ[],int end) {            //存?了queue(Z)，???点，返回queue数-1
-	int head=0;
-	int rear=1;
+int BFS(Map_YZ YZ[],int end) {            		//The function of queue[i] is recording the search order.
+	int head=0;					//head of the queue(queue out)
+	int rear=1;					//rear of the queue(queue in)
 	int i,j,k;
 	for(i=0;i<TOTAL;i++) {
-		visited[i]=0;
+		visited[i]=0;				//Initialize the visit mark to 0.(0 means "not visited", 1 means "visited")
 	}
-	visited[end]=1;
+	visited[end]=1;					//The first point has marked as "visited"
 	j=end;
 	queue[0]=end;
-	while(head<=rear) {
+	while(head<=rear) {				//loop to record the queue list
 		for(k=check_first(YZ,j);k>=0;k=check_next(YZ,j,k)) {
 			if(visited[k]==0) {
 				visited[k]=1;
@@ -285,9 +287,10 @@ int BFS(Map_YZ YZ[],int end) {            //存?了queue(Z)，???点，返回que
 		}
 		j=queue[head++];
 	}
-	return head;
+	return head;					//Return the times of searching(in case of overflow)
 }
 
+//
 //*****************************************
 // RECDIST(Map_YZ YZ[])
 //*****************************************
